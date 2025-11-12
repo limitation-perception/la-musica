@@ -1,0 +1,9 @@
+{
+  "device_id": "A1",
+  "timestamp": "2025-11-02T09:45:00Z",
+  "readings": {
+    "temperature": 23.5,
+    "humidity": 40
+  }
+}
+

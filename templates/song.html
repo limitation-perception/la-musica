@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{song_name}}</title>
+    <style>
+         body { font-family: Arial; text-align: center; background: #f2f2f2; padding: 30px; }
+        audio { margin: 20px; }
+        pre { background: #ca8d8d; padding: 15px; width: 60%; margin: 0 auto; border-radius: 10px; white-space: pre-wrap; }
+        h1 { color: #333; }
+    </style>
+
+</head>
+<body>
+ <h1>{{ song_name.replace('.mp3','').replace('_',' ').title() }}</h1>
+
+    <audio controls autoplay>
+        <source src="/music/{{song_name}}" type="audio/mpeg">
+    </audio>
+
+    <pre>{{ lyrics }}</pre>
+
+
+</body>
+</html>
