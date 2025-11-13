@@ -174,7 +174,7 @@ def ask_repeat():
 def play_music(song_file, repeat_count, speed, volume):
     try:
         pygame.mixer.music.load(song_file)
-        pygame.mixer.music.set_volume(volume * 100)
+        pygame.mixer.music.set_volume(volume / 100)
         pygame.mixer.music.play(repeat_count)
 
         print(f"Playing {song_file} at {speed}x speed and volume {volume}%...")
