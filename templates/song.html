@@ -4,22 +4,605 @@
     <meta charset="UTF-8">
     <title>{{song_name}}</title>
     <style>
-         body { font-family: Arial; text-align: center; background: #f2f2f2; padding: 30px; }
-        audio { margin: 20px; }
-        pre { background: #ca8d8d; padding: 15px; width: 60%; margin: 0 auto; border-radius: 10px; white-space: pre-wrap; }
-        h1 { color: #333; }
+        /* Загальний стиль */
+        * {
+          margin: 0;
+          padding: 0;
+          font-family: sans-serif;
+        }
+
+        .background {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-image: url("{{ url_for('static', filename='images/image2.jpg') }}");
+          background-size: cover;
+          background-position: center;
+          filter: blur(8px);
+          z-index: -1;
+        }
+
+        /* Контейнер у центрі */
+        .container {
+          position: relative;
+          z-index: 1;
+          text-align: center;
+          color: white;
+          padding-top: 60px;
+        }
+
+        /* Верхнє меню */
+        .navbar {
+          width: 88%;
+          margin: auto;
+          padding: 15px 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .navbar ul li {
+          list-style: none;
+          display: inline-block;
+          margin: 0 15px;
+        }
+
+        .navbar ul li a {
+          text-decoration: none;
+          color: #5f5f5f;
+          font-size: 15px;
+        }
+
+        /* Основна частина сторінки */
+        .content {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 100px 6%;
+        }
+
+        /* Ліва колонка */
+        .left_col h1 {
+          color: white;
+          font-size: 100px;
+          line-height: 110px;
+        }
+
+        /* Права колонка */
+        .right_col {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          text-align: right;
+          max-width: 40%;
+          margin-right: 40px; /* відступ від правої стінки */
+        }
+
+        .right_col h1 {
+          font-size: 48px;
+          color: #d37dac;
+          margin-bottom: 20px;
+        }
+
+        /* Програвач */
+        .right_col audio {
+          width: 100%;
+          max-width: 400px;
+          margin-bottom: 20px;
+          border-radius: 10px;
+        }
+
+        /* Лірікс */
+        .lyrics {
+          color: #ffd7ef;
+          font-family: Cambria, serif;
+          white-space: pre-wrap; /* зберігає переноси рядків */
+          line-height: 1.4;
+          font-size: 16px;
+        }
+
+        /* Кнопки (загальний стиль для всіх трьох) */
+        .show-graph {
+          text-align: center;
+          margin-top: 20px;
+          display: flex;
+          justify-content: center;
+          gap: 12px;            /* відстань між кнопками */
+          z-index: 2;
+        }
+
+        .graph-btn {
+          background-color: white;
+          color: #5a3b23;
+          border: 2px solid #5a3b23;
+          border-radius: 20px;
+          padding: 12px 22px;
+          font-size: 16px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+
+        .graph-btn:hover {
+          background-color: #f7d1e6;
+          color: #3e2616;
+          transform: translateY(-3px);
+        }
+
+        /* Повноекранне вікно з графіком (спільний стиль) */
+        .graph-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.6);
+          display: none;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+
+        /* Сам блок із картинкою графіка */
+        .graph-popup {
+          background: white;
+          border-radius: 15px;
+          padding: 15px;
+          box-shadow: 0 0 20px rgba(0,0,0,0.4);
+          max-width: 92vw;
+          max-height: 88vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .graph-popup img {
+          max-width: 90vw;
+          max-height: 80vh;
+          border-radius: 10px;
+        }
+        /* Мобільна адаптація (прості) */
+        @media (max-width: 900px) {
+          .content { flex-direction: column; padding: 60px 5%; }
+          .left_col h1 { font-size: 54px; line-height: 62px; text-align: center; }
+          .right_col { align-items: center; text-align: center; margin-right: 0; max-width: 100%; }
+          .right_col h1 { font-size: 32px; }
+          .show-graph { flex-wrap: wrap; gap: 10px; padding: 0 12px; }
+          .graph-btn { padding: 10px 14px; font-size: 15px; }
+        }
+
     </style>
 
 </head>
 <body>
- <h1>{{ song_name.replace('.mp3','').replace('_',' ').title() }}</h1>
 
-    <audio controls autoplay>
-        <source src="/music/{{song_name}}" type="audio/mpeg">
+<div class="background"></div>
+<div class="container">
+    <div class="navbar">
+        <ul>
+            <li><a href="#">HOME</a></li>
+            <li><a href="static\graph.png">TOP RATINGS</a></li>
+            <li><a href="#">CONTACT US</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- ТРИ КНОПКИ РЯДКОМ -->
+<div class="show-graph" style="margin-top: 20px;">
+  <button id="showGraphBtn" class="graph-btn">Show Top Ratings</button>
+  <button id="showActivityBtn" class="graph-btn">Show Listening Activity</button>
+  <button id="showTimeBtn" class="graph-btn">Show Listening Time</button>
+</div>
+
+<!-- OVERLAYS: використовується один спільний клас .graph-overlay -->
+<!-- TOP RATINGS -->
+<div id="graphOverlay" class="graph-overlay">
+  <div class="graph-popup">
+    <img src="{{ url_for('static', filename='graph.png') }}" alt="Top Ratings Graph">
+  </div>
+</div>
+
+<!-- LISTENING ACTIVITY -->
+<div id="graphOverlay1" class="graph-overlay">
+  <div class="graph-popup">
+    <img src="{{ url_for('static', filename='graph1.png') }}" alt="Listening Activity Graph">
+  </div>
+</div>
+
+<!-- LISTENING TIME -->
+<div id="graphOverlay2" class="graph-overlay">
+  <div class="graph-popup">
+    <img src="{{ url_for('static', filename='graph2.png') }}" alt="Listening Time Graph">
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="left_col">
+    <h1>THE <br> REAL <br> MUSIC</h1>
+  </div>
+
+  <div class="right_col">
+    <h1>{{ song_name.replace('.mp3','').replace('_',' ').title() }}</h1>
+
+    <audio id="mySong" controls autoplay>
+      <source src="/music/{{ song_name }}" type="audio/mp3">
+      Your browser does not support the audio element.
     </audio>
 
-    <pre>{{ lyrics }}</pre>
+    <pre class="lyrics">{{ lyrics }}</pre>
+  </div>
 
+</div>
+
+<script>
+  // --- TOP RATINGS ---
+  const btn = document.getElementById("showGraphBtn");
+  const overlay = document.getElementById("graphOverlay");
+
+  btn.addEventListener("click", () => {
+    overlay.style.display = "flex";
+  });
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.style.display = "none";
+    }
+  });
+
+  // --- ACTIVITY ---
+  const btn1 = document.getElementById("showActivityBtn");
+  const overlay1 = document.getElementById("graphOverlay1");
+
+  btn1.addEventListener("click", () => {
+    overlay1.style.display = "flex";
+  });
+
+  overlay1.addEventListener("click", (e) => {
+    if (e.target === overlay1) {
+      overlay1.style.display = "none";
+    }
+  });
+
+  // --- LISTENING TIME ---
+  const btn2 = document.getElementById("showTimeBtn");
+  const overlay2 = document.getElementById("graphOverlay2");
+
+  btn2.addEventListener("click", () => {
+    overlay2.style.display = "flex";
+  });
+
+  overlay2.addEventListener("click", (e) => {
+    if (e.target === overlay2) {
+      overlay2.style.display = "none";
+    }
+  });
+</script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>{{song_name}}</title>-->
+<!--    <style>-->
+<!--        /* Загальний стиль */-->
+<!--* {-->
+<!--  margin: 0;-->
+<!--  padding: 0;-->
+<!--  font-family: sans-serif;-->
+<!--}-->
+
+<!--.background {-->
+<!--  position: fixed;-->
+<!--  top: 0;-->
+<!--  left: 0;-->
+<!--  width: 100%;-->
+<!--  height: 100%;-->
+<!--  background-image: url("{{ url_for('static', filename='images/image2.jpg') }}");-->
+<!--  background-size: cover;-->
+<!--  background-position: center;-->
+<!--  filter: blur(8px);-->
+<!--  z-index: -1;-->
+<!--}-->
+<!--/* Контейнер у центрі */-->
+<!--.container {-->
+<!--  position: relative;-->
+<!--  z-index: 1;-->
+<!--  text-align: center;-->
+<!--  color: white;-->
+<!--  padding-top: 60px;-->
+<!--}-->
+
+<!--/* Верхнє меню */-->
+<!--.navbar {-->
+<!--  width: 88%;-->
+<!--  margin: auto;-->
+<!--  padding: 15px 0;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: space-between;-->
+<!--}-->
+
+<!--.navbar ul li {-->
+<!--  list-style: none;-->
+<!--  display: inline-block;-->
+<!--  margin: 0 15px;-->
+<!--}-->
+
+<!--.navbar ul li a {-->
+<!--  text-decoration: none;-->
+<!--  color: #5f5f5f;-->
+<!--  font-size: 15px;-->
+<!--}-->
+
+<!--/* Основна частина сторінки */-->
+<!--.content {-->
+<!--  display: flex;-->
+<!--  justify-content: space-between;-->
+<!--  align-items: flex-start;-->
+<!--  padding: 100px 6%;-->
+<!--}-->
+
+<!--/* Ліва колонка */-->
+<!--.left_col h1 {-->
+<!--  color: white;-->
+<!--  font-size: 100px;-->
+<!--  line-height: 110px;-->
+<!--}-->
+
+<!--/* Права колонка */-->
+<!--.right_col {-->
+<!--  display: flex;-->
+<!--  flex-direction: column;-->
+<!--  align-items: flex-end;-->
+<!--  text-align: right;-->
+<!--  max-width: 40%;-->
+<!--  margin-right: 40px; /* відступ від правої стінки */-->
+<!--}-->
+
+<!--.right_col h1 {-->
+<!--  font-size: 48px;-->
+<!--  color: #d37dac;-->
+<!--  margin-bottom: 20px;-->
+<!--}-->
+
+<!--/* Програвач */-->
+<!--.right_col audio {-->
+<!--  width: 100%;-->
+<!--  max-width: 400px;-->
+<!--  margin-bottom: 20px;-->
+<!--  border-radius: 10px;-->
+<!--}-->
+
+<!--/* Лірікс */-->
+<!--.lyrics {-->
+<!--  color: #ffd7ef;-->
+<!--  font-family: Cambria, serif;-->
+<!--  white-space: pre-wrap; /* зберігає переноси рядків */-->
+<!--  line-height: 1.4;-->
+<!--  font-size: 16px;-->
+<!--}-->
+
+
+
+<!--/* Кнопка Show Top Ratings */-->
+<!--.show-graph {-->
+<!--  text-align: center;-->
+<!--  margin-top: 20px;-->
+<!--}-->
+
+<!--#showGraphBtn {-->
+<!--  background-color: white;-->
+<!--  color: #5a3b23;-->
+<!--  border: 2px solid #5a3b23;-->
+<!--  border-radius: 20px;-->
+<!--  padding: 12px 30px;-->
+<!--  font-size: 16px;-->
+<!--  font-weight: bold;-->
+<!--  cursor: pointer;-->
+<!--  transition: all 0.3s ease;-->
+<!--}-->
+
+<!--#showGraphBtn:hover {-->
+<!--  background-color: #f7d1e6;-->
+<!--  color: #3e2616;-->
+<!--}-->
+
+<!--/* Повноекранне вікно з графіком */-->
+<!--#graphOverlay {-->
+<!--  position: fixed;-->
+<!--  top: 0;-->
+<!--  left: 0;-->
+<!--  width: 100%;-->
+<!--  height: 100%;-->
+<!--  background: rgba(0,0,0,0.6);-->
+<!--  display: none;-->
+<!--  justify-content: center;-->
+<!--  align-items: center;-->
+<!--  z-index: 9999;-->
+<!--}-->
+
+<!--/* Сам блок із картинкою графіка */-->
+<!--.graph-popup {-->
+<!--  background: white;-->
+<!--  border-radius: 15px;-->
+<!--  padding: 15px;-->
+<!--  box-shadow: 0 0 20px rgba(0,0,0,0.4);-->
+<!--}-->
+
+<!--.graph-popup img {-->
+<!--  max-width: 90vw;-->
+<!--  max-height: 80vh;-->
+<!--  border-radius: 10px;-->
+<!--}-->
+
+
+
+<!--        </style>-->
+
+<!--</head>-->
+<!--<body>-->
+
+
+<!--<div class="background"></div>-->
+<!--<div class="container">-->
+<!--    <div class="navbar">-->
+<!--        <ul>-->
+<!--            <li><a href="#">HOME</a></li>-->
+<!--            <li><a href="static\graph.png">TOP RATINGS</a></li>-->
+<!--            <li><a href="#">CONTACT US</a></li>-->
+<!--        </ul>-->
+
+<!--    </div>-->
+
+<!--</div>-->
+
+<!--<div class="show-graph" style="margin-top: 20px;">-->
+<!--  <button id="showGraphBtn">Show Top Ratings</button>-->
+<!--  <button id="showActivityBtn">Show Listening Activity</button>-->
+<!--  <button id="showTimeBtn">Show Listening Time</button>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; TOP RATINGS &ndash;&gt;-->
+<!--<div id="graphOverlay">-->
+<!--  <div class="graph-popup">-->
+<!--    <img src="{{ url_for('static', filename='graph.png') }}" alt="Top Ratings Graph">-->
+<!--  </div>-->
+<!--</div>-->
+<!--&lt;!&ndash; LISTENING ACTIVITY &ndash;&gt;-->
+<!--<div id="graphOverlay1" style="display:none;">-->
+<!--  <div class="graph-popup">-->
+<!--    <img src="{{ url_for('static', filename='graph1.png') }}" alt="Listening Activity Graph">-->
+<!--  </div>-->
+<!--</div>-->
+
+<!--&lt;!&ndash; LISTENING TIME &ndash;&gt;-->
+<!--<div id="graphOverlay2" style="display:none;">-->
+<!--  <div class="graph-popup">-->
+<!--    <img src="{{ url_for('static', filename='graph2.png') }}" alt="Listening Time Graph">-->
+<!--  </div>-->
+<!--</div>-->
+
+
+<!--<div class="content">-->
+
+<!--  <div class="left_col">-->
+<!--    <h1>THE <br> REAL <br> MUSIC</h1>-->
+<!--  </div>-->
+
+<!--  <div class="right_col">-->
+<!--    <h1>{{ song_name.replace('.mp3','').replace('_',' ').title() }}</h1>-->
+
+<!--    <audio id="mySong" controls autoplay>-->
+<!--      <source src="/music/{{ song_name }}" type="audio/mp3">-->
+<!--      Your browser does not support the audio element.-->
+<!--    </audio>-->
+
+<!--    <pre class="lyrics">{{ lyrics }}</pre>-->
+<!--  </div>-->
+
+<!--</div>-->
+
+
+<!--&lt;!&ndash;    <img src="images/static/graph.png" alt="графік">&ndash;&gt;-->
+<!--&lt;!&ndash; <h1>{{song_name.replace('.mp3','').replace('_',' ').title() }}</h1>&ndash;&gt;-->
+
+
+
+
+<!--</div>-->
+
+<!--&lt;!&ndash;<div class="show-graph">&ndash;&gt;-->
+<!--&lt;!&ndash;  <button id="showGraphBtn" style="margin-top: 30px; padding: 10px 20px; font-size: 16px;">&ndash;&gt;-->
+<!--&lt;!&ndash;    Show Top Ratings&ndash;&gt;-->
+<!--&lt;!&ndash;  </button>&ndash;&gt;-->
+<!--&lt;!&ndash;  <div id="graphContainer" style="margin-top: 20px; display: none;">&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;    <img src="/static/graph.png" alt="Top Ratings Graph" style="max-width: 80%; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3);">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;  <img src="{{ url_for('static', filename='graph.png') }}" alt="Top Ratings Graph" style="max-width: 80%; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.3);">&ndash;&gt;-->
+
+<!--&lt;!&ndash;  </div>&ndash;&gt;-->
+<!--&lt;!&ndash;</div>&ndash;&gt;-->
+
+<!--<script>-->
+
+<!--  const btn = document.getElementById("showGraphBtn");-->
+<!--  const overlay = document.getElementById("graphOverlay");-->
+
+<!--  btn.addEventListener("click", () => {-->
+<!--    overlay.style.display = "flex";-->
+<!--  });-->
+
+<!--  // Клік поза графіком — закриває вікно-->
+<!--  overlay.addEventListener("click", (e) => {-->
+<!--    if (e.target === overlay) {-->
+<!--      overlay.style.display = "none";-->
+<!--    }-->
+<!--  });-->
+
+
+<!--  const btn = document.getElementById("showGraphBtn");-->
+<!--  const overlay = document.getElementById("graphOverlay");-->
+
+<!--  btn.addEventListener("click", () => {-->
+<!--    overlay.style.display = "flex";-->
+<!--  });-->
+
+<!--  overlay.addEventListener("click", (e) => {-->
+<!--    if (e.target === overlay) overlay.style.display = "none";-->
+<!--  });-->
+
+<!--  // -&#45;&#45; NEW BUTTONS -&#45;&#45;-->
+
+<!--  // Activity-->
+<!--  const btn1 = document.getElementById("showActivityBtn");-->
+<!--  const overlay1 = document.getElementById("graphOverlay1");-->
+
+<!--  btn1.addEventListener("click", () => {-->
+<!--    overlay1.style.display = "flex";-->
+<!--  });-->
+
+<!--  overlay1.addEventListener("click", (e) => {-->
+<!--    if (e.target === overlay1) overlay1.style.display = "none";-->
+<!--  });-->
+
+<!--  // Listening Time-->
+<!--  const btn2 = document.getElementById("showTimeBtn");-->
+<!--  const overlay2 = document.getElementById("graphOverlay2");-->
+
+<!--  btn2.addEventListener("click", () => {-->
+<!--    overlay2.style.display = "flex";-->
+<!--  });-->
+
+<!--  overlay2.addEventListener("click", (e) => {-->
+<!--    if (e.target === overlay2) overlay2.style.display = "none";-->
+<!--  });-->
+
+
+
+
+<!--</script>-->
+
+
+
+
+
+
+
+<!--</body>-->
+<!--</html>-->
